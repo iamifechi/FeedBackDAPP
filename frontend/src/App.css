@@ -1,0 +1,148 @@
+#root {
+  text-align: center;
+  overflow-x: hidden;
+  margin: 0 auto;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4em 0;
+}
+
+.feedback_area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90%;
+  margin:1em auto;
+  position: relative;
+}
+
+.header {
+  font-size: clamp(2em, 10dvw, 4em);
+  font-weight: 800;
+  line-height: 92%;
+  max-width: 800px;
+}
+
+.feedbacks {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1em;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  width: max(100%, 380px);
+  padding: 0.2em 0.8em 0.3em;
+  height: 100%;
+  border-radius: 10px;
+  background: rgb(73, 73, 73);
+  transition: 0.5s ease;
+}
+
+.cards:hover {
+  transform: scale(1.05);
+}
+
+.cards:hover p.address {
+  width: 100%;
+  transition: 1s ease;
+}
+
+.cards:not(:hover) p.address {
+  width: 30%;
+  transition: 1s ease;
+}
+
+.cards > p {
+  color: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+p.address {
+  font-weight: 400;
+  font-size: 70%;
+  letter-spacing: 0;
+  width: 30%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 5px;
+  transition: 1s ease;
+}
+
+
+p.address span.span {
+  font-weight: 600;
+  text-decoration: none !important;
+}
+
+p.feedback {
+  font-size: 120%;
+  margin: 0.1em 0 0.4em;
+}
+
+p.time {
+  opacity: 0.7;
+  font-size: 80%;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: max(80%, 380px);
+  border-top: 1px solid grey;
+  padding-top: 1em;
+}
+
+textarea {
+  min-width: 250px;
+  min-height: 50px;
+  padding: 1em;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  border: none;
+  width: 100%;
+  max-width: 580px;
+}
+
+form span {
+  font-size: 70%;
+  opacity: 0.3;
+  align-self: flex-start;
+  text-align: left;
+}
+
+form button {
+  margin-top: 1em;
+}
+
+.send{
+  background: transparent;
+  border:1px solid gray;
+  transition: .5s ease;
+}
+
+.send.active{
+  background-color: rgba(245, 245, 245, 0.814);
+  color: #1a1a1a
+}
+
+.send:hover{
+  background-color: whitesmoke;
+  color: #1a1a1a
+}
