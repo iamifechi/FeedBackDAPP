@@ -4,9 +4,9 @@ import "./App.css";
 import { data } from "./data";
 
 // import ABI data
-import Feedback from "../../web3/artifacts/contracts/Feedback.sol/Feedback.json";
+import Feedback from "./abi/Feedback.json";
 import { formatFeedbacks } from "./utils/getFormattedFeedbacks";
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const CONTRACT_ADDRESS = "0x25F8ca0Ded9716e0D757C0b345b51EB3Cb25E5Af";
 
 const findMetaMaskAccount = async () => {
   try {
@@ -54,7 +54,6 @@ const App = () => {
       );
       try {
         const data = await contract.getAllFeedback();
-        console.log("data::: ", data);
         setFeedbacks(formatFeedbacks(data));
       } catch (error) {
         console.log("Error ", error);
