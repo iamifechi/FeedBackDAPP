@@ -6,16 +6,14 @@ import { data } from "./data";
 // import ABI data
 import Feedback from "./abi/Feedback.json";
 import { formatFeedbacks } from "./utils/getFormattedFeedbacks";
-const CONTRACT_ADDRESS = "0x25F8ca0Ded9716e0D757C0b345b51EB3Cb25E5Af";
 
-const findMetaMaskAccount = async () => {
+const fetchAccounts = async () => {
   try {
     const ethereum = window.ethereum;
     if (!ethereum) {
       console.error("Make sure you have Metamask");
       return null;
     }
-
     console.log("We have the Ethereum object", ethereum);
     const accounts = await ethereum.request({ method: "eth_accounts" });
 
@@ -39,25 +37,32 @@ const App = () => {
   const [feedback, setFeedback] = useState("");
   const [balance, setBalance] = useState("");
   const [feedbacks, setFeedbacks] = useState([]);
+  const CONTRACT_ADDRESS = "0x25F8ca0Ded9716e0D757C0b345b51EB3Cb25E5Af";
 
   const requestAccount = async () => {
     await window.ethereum.request({ method: "eth_requestAccounts" });
   };
 
   const fetchFeedbacks = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        Feedback.abi,
-        provider.getSigner()
-      );
-      try {
+   
+    try {
+      if (typeof window.ethereum !== "undefined") {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          Feedback.abi,
+          signer
+        );
+
         const data = await contract.getAllFeedback();
-        setFeedbacks(formatFeedbacks(data));
-      } catch (error) {
-        console.log("Error ", error);
+        if (data) {
+          console.log("data");
+          setFeedbacks(formatFeedbacks(data));
+        }
       }
+    } catch (error) {
+      console.log("Error ", error);
     }
   };
   const onConnect = async () => {
@@ -111,11 +116,11 @@ const App = () => {
 
   useEffect(() => {
     fetchFeedbacks();
-  }, []);
+  });
 
   useEffect(() => {
     async function getAccount() {
-      const account = await findMetaMaskAccount();
+      const account = await fetchAccounts();
       if (account !== null) {
         setCurrentAccount(account);
       }
@@ -155,7 +160,7 @@ const App = () => {
                 placeholder="Enter feedback here!"
                 required
               />
-              {currentAccount && (
+              {currentAccount ? (
                 <>
                   <span>Commenting as {currentAccount}</span>
 
@@ -166,7 +171,7 @@ const App = () => {
                     Send Feedback
                   </button>
                 </>
-              )}
+              ) : null}
             </form>
           </div>
         </section>
