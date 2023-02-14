@@ -162,7 +162,7 @@ const App = () => {
           <header className="header">
             Who is your favourite #Learnable23 person 🤗?
           </header>
-          <p>[ Could be a genie, mentor, facilitator... ]</p>
+          <p>[ Could be a genie, mentor, facilitator or just leave a message here... ]</p>
 
 
           <Feedbacks feedbacks={feedbacks} />
