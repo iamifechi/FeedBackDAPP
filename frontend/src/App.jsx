@@ -1,54 +1,30 @@
-import { ethers } from "ethers";
-import { useEffect, useState } from "react";
 import "./App.css";
-import { data } from "./data";
-
-// import ABI data
-import Feedback from "./abi/Feedback.json";
+import { useEffect, useRef, useState } from "react";
+import { ethers } from "ethers";
+import MetaMaskOnboarding from "@metamask/onboarding";
 import { formatFeedbacks } from "./utils/getFormattedFeedbacks";
+import { CONTRACT_ADDRESS, RPC_URL, ORIGIN, CONNECTED_TEXT, ONBOARD_TEXT, CONNECT_TEXT } from "./const/constants";
+import Feedback from "./abi/Feedback.json";
+import Feedbacks from "./components/Feedbacks";
 
-const fetchAccounts = async () => {
-  try {
-    const ethereum = window.ethereum;
-    if (!ethereum) {
-      console.error("Make sure you have Metamask");
-      return null;
-    }
-    console.log("We have the Ethereum object", ethereum);
-    const accounts = await ethereum.request({ method: "eth_accounts" });
 
-    if (accounts.length !== 0) {
-      const account = accounts[0];
-      console.log("found an authorized account: ", account);
-      return account;
-    } else {
-      console.error("No authorized account found");
-      return null;
-    }
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
 
 const App = () => {
-  const [currentAccount, setCurrentAccount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [buttonText, setButtonText] = useState(ONBOARD_TEXT);
+  const [isDisabled, setDisabled] = useState(false);
+  const [disableSubmit, setDisableSubmit] = useState(false);
+  const [accounts, setAccounts] = useState();
   const [feedback, setFeedback] = useState("");
-  const [balance, setBalance] = useState("");
-  const [feedbacks, setFeedbacks] = useState([]);
-  const CONTRACT_ADDRESS = "0x25F8ca0Ded9716e0D757C0b345b51EB3Cb25E5Af";
-
-  const requestAccount = async () => {
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-  };
+  const [feedbacks, setFeedbacks] = useState();
+  const [response, setResponse] = useState(null);
+  const onboarding = useRef();
 
   const fetchFeedbacks = async () => {
-   
     try {
-      if (typeof window.ethereum !== "undefined") {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
+        const signer = new ethers.VoidSigner(
+          CONTRACT_ADDRESS,
+          ethers.getDefaultProvider(RPC_URL)
+        );
         const contract = new ethers.Contract(
           CONTRACT_ADDRESS,
           Feedback.abi,
@@ -57,78 +33,127 @@ const App = () => {
 
         const data = await contract.getAllFeedback();
         if (data) {
-          console.log("data");
           setFeedbacks(formatFeedbacks(data));
         }
-      }
     } catch (error) {
-      console.log("Error ", error);
+      console.log("Error fetching feedbacks: ", error);
     }
   };
-  const onConnect = async () => {
-    setLoading(true);
+
+  const onClickConnect = () => {
+    if(accounts && accounts.length !== 0){
+         setAccounts(undefined);
+         return;
+    }
     try {
-      const ethereum = window.ethereum;
-      if (!ethereum) {
-        alert("Get MetaMask!");
-        setLoading(false);
-        return;
+      if (MetaMaskOnboarding.isMetaMaskInstalled()) {
+        window.ethereum
+          .request({ method: "eth_requestAccounts" })
+          .then((newAccounts) => setAccounts(newAccounts));
+      } else {
+        onboarding.current.startOnboarding();
       }
-
-      const accounts = await ethereum.request({
-        method: "eth_requestAccounts",
-      });
-
-      setCurrentAccount(accounts[0]);
-      setLoading(false);
     } catch (error) {
-      setLoading(false);
-      console.error(error);
+      console.log("Error getting metamask: ", error);
     }
   };
 
-  const onDisconnect = () => {
-    console.log("onDisconnect");
-    setBalance(undefined);
-    setCurrentAccount(undefined);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!feedback) return;
+    setResponse(null);
+    setDisableSubmit(true);
+    try {
+      if (!feedback) return;
+      if (typeof window.ethereum !== "undefined") {
+        // await requestAccount();
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
 
-    if (typeof window.ethereum !== "undefined") {
-      await requestAccount();
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const contract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          Feedback.abi,
+          provider.getSigner()
+        );
 
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        Feedback.abi,
-        provider.getSigner()
-      );
+        const transaction = await contract.addFeedback(feedback);
+        setFeedback("");
+         setResponse({
+            status: true,
+            message: `Mining ${transaction.hash}`,
+          })
 
-      const transaction = await contract.addFeedback(feedback);
-      setFeedback("");
-      await transaction.wait();
-      fetchFeedbacks();
+        await transaction.wait().then(() =>
+          setResponse({
+            status: true,
+            message: `Feedback submitted: Mined ${transaction.hash}`,
+          })
+        );
+
+        await fetchFeedbacks();
+        setDisableSubmit(false);
+      }
+    } catch (error) {
+      setResponse({
+        status: false,
+        message: error.message,
+      });
+      setDisableSubmit(false);
+      console.log("Failed to update feedback: ", error);
     }
   };
 
+  const handleInput = (e) => {
+    if (response) {
+      setResponse(null);
+    }
+    setFeedback(e.target.value);
+  };
+
+  // fetch existing feedbacks
   useEffect(() => {
     fetchFeedbacks();
-  });
-
-  useEffect(() => {
-    async function getAccount() {
-      const account = await fetchAccounts();
-      if (account !== null) {
-        setCurrentAccount(account);
-      }
-    }
-    getAccount();
   }, []);
 
-  const handleInput = (e) => setFeedback(e.target.value);
+  // check for metamask
+  useEffect(() => {
+    if (!onboarding.current) {
+      onboarding.current = new MetaMaskOnboarding();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (MetaMaskOnboarding.isMetaMaskInstalled()) {
+      setButtonText(CONNECT_TEXT);
+      try {
+        if (accounts && accounts.length > 0) {
+          setButtonText(CONNECTED_TEXT);
+          setDisabled(false);
+          onboarding.current.stopOnboarding();
+        } else {
+          setButtonText(CONNECT_TEXT);
+          setDisabled(false);
+        }
+      } catch (error) {
+        console.log("Error connecting to metamask: ", error);
+      }
+    } else {
+    }
+  }, [accounts]);
+
+  useEffect(() => {
+    function handleNewAccounts(newAccounts) {
+      setAccounts(newAccounts);
+    }
+    if (MetaMaskOnboarding.isMetaMaskInstalled()) {
+      window.ethereum
+        .request({ method: "eth_requestAccounts" })
+        .then(handleNewAccounts);
+      window.ethereum.on("accountsChanged", handleNewAccounts);
+      return () => {
+        window.ethereum.removeListener("accountsChanged", handleNewAccounts);
+      };
+    }
+  }, []);
 
   return (
     <>
@@ -138,52 +163,40 @@ const App = () => {
             Who is your favourite #Learnable23 person 🤗?
           </header>
           <p>[ Could be a genie, mentor, facilitator... ]</p>
-          <div className="feedbacks">
-            {feedbacks.map((feedback, index) => {
-              return (
-                <div key={index} className="cards">
-                  <p className="address">
-                    <span>From: </span>
-                    {feedback.sender}
-                  </p>
-                  <p className="feedback">{feedback.feedback}</p>
-                  <p className="time">{feedback.time}</p>
-                </div>
-              );
-            })}
-            <form onSubmit={handleSubmit}>
-              <textarea
-                onChange={handleInput}
-                type="text"
-                name="feedback"
-                value={feedback}
-                placeholder="Enter feedback here!"
-                required
-              />
-              {currentAccount ? (
-                <>
-                  <span>Commenting as {currentAccount}</span>
 
-                  <button
-                    className={feedback ? "active send" : "send"}
-                    type="submit"
-                  >
-                    Send Feedback
-                  </button>
-                </>
-              ) : null}
-            </form>
-          </div>
+
+          <Feedbacks feedbacks={feedbacks} />
+
+          <form onSubmit={handleSubmit}>
+            <textarea
+              onChange={handleInput}
+              type="text"
+              name="feedback"
+              value={feedback}
+              placeholder="Enter feedback here!"
+              required
+            />
+            {accounts ? (
+              <>
+                <span>Commenting as {accounts}</span>
+                {response && (
+                  <span className={response.status ? "success" : "error"}>
+                    {response.message}
+                  </span>
+                )}
+                <button
+                  className={feedback ? "active send" : "send"}
+                  type="submit"
+                  disabled={disableSubmit}
+                >
+                  Send Feedback
+                </button>
+              </>
+            ) : null}
+          </form>
         </section>
-
-        <button onClick={currentAccount ? onDisconnect : onConnect}>
-          {currentAccount
-            ? loading
-              ? "Disconnecting..."
-              : "Disconnect wallet"
-            : loading
-            ? "Connecting..."
-            : "Connect Wallet"}
+        <button disabled={isDisabled} onClick={onClickConnect}>
+          {isDisabled ? "loading..." : buttonText}
         </button>
       </main>
 

@@ -14,8 +14,9 @@
   -webkit-text-size-adjust: 100%;
 }
 
-*{
+* {
   box-sizing: border-box;
+  content: "";
 }
 
 a {
@@ -28,7 +29,6 @@ a:hover {
 }
 
 body {
-  display: flex;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
@@ -37,7 +37,6 @@ body {
   margin: 0 auto;
   padding: 0;
   position: relative;
-  max-width: 1280px;
 }
 
 h1 {
@@ -54,18 +53,44 @@ button {
   font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition:0.5s ease;
   width: min(100%, 250px);
   margin: auto;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  outline: none;
+}
+
+button::after {
+  position: absolute;
+  content: "";
+  z-index: -1;
+  height: 100%;
+  left: -35%;
+  top: 0;
+  transform: skew(50deg);
+  transition-duration: 0.6s;
+  transform-origin: top left;
+  width: 0;
+  background:rgba(0, 0, 0, 0.992);
+
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: rebeccapurple;
+}
+
+button:hover:after{
+  height:100%;
+  width: 135%;
+  background-color: rebeccapurple;;
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -83,10 +108,9 @@ button:focus-visible {
     color: #213547;
     border: 1px solid #2135473d;
     background-color: #ffffffe5;
-   
   }
 
-  textarea:focus-within{
+  textarea:focus-within {
     background-color: #ffffff;
     box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.2);
   }
@@ -95,7 +119,10 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
-   
+    background-color: #1a1a1a;;
+    color: rgb(255, 255, 255);
   }
+  /* button:hover{
+    color: whitesmoke;
+  } */
 }
