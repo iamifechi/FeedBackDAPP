@@ -4,7 +4,7 @@ const Feedbacks = ({ feedbacks }) => {
   if (!feedbacks) return <p className="empty">Loading feedbacks...</p>;
   return (
     <div className="feedbacks">
-      {feedbacks.map((feedback, index) => {
+      {feedbacks.reverse().map((feedback, index) => {
         return (
           <div key={index} className="cards">
             <p className="address">
