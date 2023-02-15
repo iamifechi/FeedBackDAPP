@@ -160,7 +160,7 @@ const App = () => {
       <main>
         <section className="feedback_area">
           <header className="header">
-            Who is your favourite #Learnable23 person 🤗?
+            Shoutout to your favourite #Learnable22 person 🤗?
           </header>
           <p>[ Could be a genie, mentor, facilitator or just leave a message here... ]</p>
 
